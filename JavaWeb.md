@@ -2279,6 +2279,147 @@ Servlet运行在Servlet容器(web服务器)中，其生命周期由容器来管�
 
 
 
+## Request
+
+
+
+### 获取请求行数据
+
+```java
+package web;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+
+@WebServlet("/req1")
+public class RequestDemo1 extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String method = req.getMethod();
+        System.out.println(method);
+
+        String contextPath = req.getContextPath();
+        System.out.println(contextPath);
+
+        StringBuffer requestURL = req.getRequestURL();
+        System.out.println(requestURL);
+
+        String requestURI = req.getRequestURI();
+        System.out.println(requestURI);
+
+        String queryString = req.getQueryString();
+        System.out.println(queryString);
+    }
+}
+
+```
+
+
+
+### 页面跳转
+
+```java
+package web.request;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet("/req4")
+public class RequestDemo4 extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("req4 get......");
+
+        Object msg = req.getAttribute("msg");
+        System.out.println("msg = " + msg);
+    }
+}
+
+```
+
+
+
+
+
+```java
+package web.request;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet("/req3")
+public class RequestDemo3 extends HttpServlet {
+
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("demo3...");
+
+        req.setAttribute("msg","hello req4");
+
+        req.getRequestDispatcher("/req4").forward(req,resp);
+    }
+
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doGet(req,resp);
+    }
+}
+
+```
+
+
+
+
+
+
+
+## Response
+
+
+
+### 响应数据
+
+```java
+package web.response;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+@WebServlet("/resp3")
+public class ResponseDemo3 extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("text/html;charset=utf8");
+        PrintWriter writer = resp.getWriter();
+        //resp.setHeader("content-type","text/html");
+        writer.write("aaa");
+        writer.write("你好");
+        writer.write("<h1>aaa</h1>");
+    }
+}
+
+```
 
 
 
@@ -2288,6 +2429,7 @@ Servlet运行在Servlet容器(web服务器)中，其生命周期由容器来管�
 
 
 
+## 登录注册案例
 
 
 
@@ -2295,5 +2437,159 @@ Servlet运行在Servlet容器(web服务器)中，其生命周期由容器来管�
 
 
 
+### UserMapper
 
+```java
+package mapper;
+
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import pojo.User;
+
+public interface UserMapper {
+
+    @Select("select * from tb_user where username = #{username} and password = #{password}")
+    User select(@Param("username") String username,@Param("password") String password);
+
+    @Select("select * from tb_user where username = #{username}")
+    User selectByUsername(String username);
+
+    @Insert("insert into tb_user values(null,#{username},#{password})")
+    void add(User user);
+}
+
+```
+
+
+
+### LoginServlet
+
+```java
+package web;
+
+import mapper.UserMapper;
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import pojo.User;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+
+@WebServlet("/loginServlet")
+public class LoginServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String username = req.getParameter("username");
+        String password = req.getParameter("password");
+
+        String resource = "mybatis-config.xml";
+        InputStream inputStream = Resources.getResourceAsStream(resource);
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+
+        UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+
+        User user = userMapper.select(username, password);
+
+        sqlSession.close();
+
+        resp.setContentType("text/html;charset=utf-8");
+        PrintWriter writer = resp.getWriter();
+
+        if(user != null) {
+            writer.write("登录成功");
+        } else {
+            writer.write("登录失败");
+        }
+
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doGet(req,resp);
+    }
+}
+
+```
+
+
+
+
+
+### RegisterServlet
+
+
+
+```java
+package web;
+
+import mapper.UserMapper;
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import pojo.User;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+
+@WebServlet("/registerServlet")
+public class RegisterServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String username = req.getParameter("username");
+        String password = req.getParameter("password");
+
+        User user = new User();
+        user.setPassword(password);
+        user.setUsername(username);
+
+        String resource = "mybatis-config.xml";
+        InputStream inputStream = Resources.getResourceAsStream(resource);
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+
+        UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+
+        User u = userMapper.selectByUsername(username);
+
+        if(u == null) {
+            userMapper.add(user);
+
+            sqlSession.commit();
+
+            sqlSession.close();
+        } else {
+            resp.setContentType("text/html;charset=utf-8");
+            resp.getWriter().write("用户名已存在");
+        }
+
+
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doGet(req,resp);
+    }
+}
+
+```
 
