@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <style>
+      #result {
+        width: 200px;
+        height: 100px;
+        border: solid 1px #90b;
+      }
+    </style>
+  </head>
+  <body>
+    <button>点击</button>
+    <div id="result"></div>
+
+    <script>
+      const btn = document.getElementsByTagName("button")[0];
+      btn.onclick = function () {
+        const xhr = new XMLHttpRequest();
+        const result = document.getElementById("result");
+
+        xhr.open("GET", "http://127.0.0.1:8000/server");
+
+        xhr.send();
+
+        //readystate 是 xhr 对象中的属性，表示状态0 1 2 3 4
+        xhr.onreadystatechange = function () {
+          //服务端返回了所有结果
+          if (xhr.readyState === 4) {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              //   console.log(xhr.status);
+              //   console.log(xhr.statusText);
+              //   console.log(xhr.getAllResponseHeaders);
+              //   console.log(xhr.response);
+
+              //设置result文本
+              result.innerHTML = xhr.response;
+            } else {
+            }
+          }
+        };
+      };
+    </script>
+  </body>
+</html>

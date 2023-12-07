@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <style>
+      #result {
+        width: 200px;
+        height: 100px;
+        border: solid 1px skyblue;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="result"></div>
+    <button>click me</button>
+
+    <script>
+      const result = document.getElementById("result");
+      const btn = document.getElementsByTagName("button")[0];
+
+      btn.addEventListener("click", function () {
+        const xhr = new XMLHttpRequest();
+
+        xhr.timeout = 2000;
+        xhr.ontimeout = function () {
+          alert("网络异常");
+        };
+
+        xhr.onerror = function () {
+          alert("网络似乎已经断开");
+        };
+
+        xhr.open("GET", "http://127.0.0.1:8000/delay");
+        xhr.send();
+
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              result.innerHTML = xhr.response;
+            }
+          }
+        };
+      });
+    </script>
+  </body>
+</html>

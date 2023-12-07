@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <style>
+      #result {
+        width: 200px;
+        height: 100px;
+        border: solid 1px skyblue;
+      }
+    </style>
+  </head>
+  <body>
+    <button>发送</button>
+
+    <script>
+      const btns = document.querySelectorAll("button");
+      let x = null;
+
+      let isSending = false;
+
+      btns[0].onclick = function () {
+        if (isSending) x.abort();
+        x = new XMLHttpRequest();
+        isSending = true;
+
+        x.open("GET", "http://127.0.0.1:8000/delay");
+        x.send();
+
+        x.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            isSending = false;
+          }
+        };
+      };
+    </script>
+  </body>
+</html>
